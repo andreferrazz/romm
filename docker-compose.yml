@@ -1,0 +1,61 @@
+volumes:
+    mysql_data:
+    romm_resources:
+    romm_redis_data:
+
+networks:
+    dokploy-network:
+        external: true
+
+services:
+    romm:
+        image: rommapp/romm:latest
+        container_name: romm
+        restart: unless-stopped
+        environment:
+            - DB_HOST=romm-db
+            - DB_NAME=romm
+            - DB_USER=romm-user
+            - DB_PASSWD=${DB_PASSWD}
+            - ROMM_AUTH_SECRET_KEY=${ROMM_AUTH_SECRET_KEY}
+            - SCREENSCRAPER_USER=${SCREENSCRAPER_USER:-}
+            - SCREENSCRAPER_PASSWORD=${SCREENSCRAPER_PASSWORD:-}
+            - RETROACHIEVEMENTS_API_KEY=${RETROACHIEVEMENTS_API_KEY:-}
+            - STEAMGRIDDB_API_KEY=${STEAMGRIDDB_API_KEY:-}
+            - HASHEOUS_API_ENABLED=true
+        volumes:
+            - romm_resources:/romm/resources
+            - romm_redis_data:/redis-data
+            - /srv/romm/library:/romm/library
+            - /srv/romm/assets:/romm/assets
+            - /srv/romm/config:/romm/config
+        expose:
+            - 8080
+        networks:
+            - default
+            - dokploy-network
+        depends_on:
+            romm-db:
+                condition: service_healthy
+                restart: true
+
+    romm-db:
+        image: mariadb:latest
+        container_name: romm-db
+        restart: unless-stopped
+        environment:
+            - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+            - MARIADB_DATABASE=romm
+            - MARIADB_USER=romm-user
+            - MARIADB_PASSWORD=${DB_PASSWD}
+        volumes:
+            - mysql_data:/var/lib/mysql
+        networks:
+            - default
+        healthcheck:
+            test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+            start_period: 30s
+            start_interval: 10s
+            interval: 10s
+            timeout: 5s
+            retries: 5
