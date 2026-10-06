@@ -1,6 +1,5 @@
 volumes:
     mysql_data:
-    romm_resources:
     romm_redis_data:
 
 networks:
@@ -24,11 +23,11 @@ services:
             - STEAMGRIDDB_API_KEY=${STEAMGRIDDB_API_KEY:-}
             - HASHEOUS_API_ENABLED=true
         volumes:
-            - romm_resources:/romm/resources
+            - /srv/apps/romm/resources:/romm/resources
             - romm_redis_data:/redis-data
-            - /srv/romm/library:/romm/library
-            - /srv/romm/assets:/romm/assets
-            - /srv/romm/config:/romm/config
+            - /srv/library/games:/romm/library
+            - /srv/apps/romm/assets:/romm/assets
+            - /srv/apps/romm/config:/romm/config
         expose:
             - 8080
         networks:
